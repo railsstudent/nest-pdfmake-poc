@@ -1,0 +1,6 @@
+{
+  "invoice": {
+    "date_of_issue": "Date of issue",
+    "payment_method": "Payment Method"
+  }
+}
