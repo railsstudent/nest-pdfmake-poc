@@ -28,6 +28,7 @@
     "cross-env": "^7.0.3",
     "html-to-pdfmake": "^2.3.10",
     "nestjs-i18n": "^9.0.4",
+    "pdfmake": "^0.2.5",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"

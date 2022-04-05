@@ -1,6 +1,14 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": ["nestjs", "dtos", "commitlint"],
+  "words": [
+    "nestjs",
+    "dtos",
+    "commitlint",
+    "pdfmake",
+    "roboto",
+    "noto",
+    "bolditalics"
+  ],
   "flagWords": ["hte"]
 }

@@ -1,4 +1,9 @@
-import { Controller } from '@nestjs/common'
+import { Controller, Post } from '@nestjs/common'
 
 @Controller('invoice')
-export class InvoiceController {}
+export class InvoiceController {
+  @Post()
+  generateInvoice() {
+    console.log('Download invoice')
+  }
+}
