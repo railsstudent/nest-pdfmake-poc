@@ -9,7 +9,10 @@ export class PdfService {
 
   createDocument(htmlString: string): PDFKit.PDFDocument {
     const content = htmlToPdfmake(htmlString)
-    const docDefinition = { content }
+    const defaultStyles = {
+      font: 'Roboto',
+    }
+    const docDefinition = { content, defaultStyles }
     return this.pdfPrinter.createPdfKitDocument(docDefinition)
   }
 }
