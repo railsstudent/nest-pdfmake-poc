@@ -1,6 +1,13 @@
 {
   "invoice": {
-    "date_of_issue": "Date of issue",
-    "payment_method": "Payment Method"
+    "bill_to": "記賬到",
+    "date_of_issue": "簽發日期",
+    "payment_method": "付款方法",
+    "credit_card": "信用卡",
+    "description": "描述",
+    "unit_price": "單價",
+    "quantity": "數量",
+    "total": "金額",
+    "total_amount": "總金額"
   }
 }

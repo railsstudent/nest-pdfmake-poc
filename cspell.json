@@ -8,7 +8,9 @@
     "pdfmake",
     "roboto",
     "noto",
-    "bolditalics"
+    "bolditalics",
+    "streamable",
+    "colspan"
   ],
   "flagWords": ["hte"]
 }

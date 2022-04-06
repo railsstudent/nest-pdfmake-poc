@@ -1,18 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common'
-import PdfPrinter from 'pdfmake'
-import htmlToPdfmake from 'html-to-pdfmake'
+import PdfPrinter = require('pdfmake')
+import htmlToPdfmake = require('html-to-pdfmake')
+import jsdom = require('jsdom')
+import { Style, TDocumentDefinitions } from 'pdfmake/interfaces'
 import { PDF_MAKER_SYMBOL } from '../constants'
 
 @Injectable()
 export class PdfService {
   constructor(@Inject(PDF_MAKER_SYMBOL) private pdfPrinter: PdfPrinter) {}
 
-  createDocument(htmlString: string): PDFKit.PDFDocument {
-    const content = htmlToPdfmake(htmlString)
-    const defaultStyles = {
+  makeDocument(htmlString: string, optionalDefinition: Omit<TDocumentDefinitions, 'content'> = {}): PDFKit.PDFDocument {
+    const { window } = new jsdom.JSDOM('')
+    const content = htmlToPdfmake(htmlString, { tableAutoSize: true, window })
+    const defaultStyle: Style = {
       font: 'Roboto',
     }
-    const docDefinition = { content, defaultStyles }
+    const docDefinition: TDocumentDefinitions = { ...optionalDefinition, content, defaultStyle }
     return this.pdfPrinter.createPdfKitDocument(docDefinition)
   }
 }

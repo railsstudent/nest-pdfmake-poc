@@ -1,6 +1,13 @@
 {
   "invoice": {
+    "bill_to": "Bill To",
     "date_of_issue": "Date of issue",
-    "payment_method": "Payment Method"
+    "payment_method": "Payment Method",
+    "credit_card": "Credit Card",
+    "description": "Description",
+    "unit_price": "Unit Price",
+    "quantity": "Quantity",
+    "total": "Total",
+    "total_amount": "Total Amount"
   }
 }
