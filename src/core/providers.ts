@@ -2,8 +2,8 @@ import { Provider } from '@nestjs/common'
 import Pdfmake = require('pdfmake')
 import { TFontDictionary } from 'pdfmake/interfaces'
 import * as path from 'path'
+import { env } from '../config'
 import { PDF_MAKER_SYMBOL } from './constants'
-import { env } from '../config/env.config'
 
 export const PDF_MAKER: Provider = {
   provide: PDF_MAKER_SYMBOL,
@@ -18,10 +18,10 @@ export const PDF_MAKER: Provider = {
         bolditalics: path.join(robotoPath, 'Roboto-MediumItalic.ttf'),
       },
       Noto: {
-        normal: path.join(notoPath, 'NotoSansTC-Regular.ttf'),
-        bold: path.join(notoPath, 'NotoSansTC-Medium.ttf'),
-        italics: path.join(notoPath, 'NotoSansTC-Light.ttf'),
-        bolditalics: path.join(notoPath, 'NotoSansTC-Bold.ttf'),
+        normal: path.join(notoPath, 'NotoSansTC-Regular.otf'),
+        bold: path.join(notoPath, 'NotoSansTC-Medium.otf'),
+        italics: path.join(notoPath, 'NotoSansTC-Light.otf'),
+        bolditalics: path.join(notoPath, 'NotoSansTC-Bold.otf'),
       },
     }
     return new Pdfmake(fonts)

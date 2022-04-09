@@ -34,9 +34,11 @@ module.exports = {
     'import/order': [
       1,
       {
-        groups: ['external', 'builtin', 'internal', 'sibling', 'parent', 'index'],
+        groups: ['external', 'builtin', 'internal', 'index', 'parent', 'sibling'],
       },
     ],
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/restrict-template-expressions': ['error', { allowAny: true }],
     '@typescript-eslint/naming-convention': [
       'error',
       {
