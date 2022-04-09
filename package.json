@@ -28,6 +28,7 @@
     "cls-hooked": "^4.2.2",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
+    "date-fns": "^2.28.0",
     "helmet": "^5.0.2",
     "html-to-pdfmake": "^2.3.10",
     "jsdom": "^19.0.0",

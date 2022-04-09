@@ -3,13 +3,24 @@ import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
 import { I18nService } from 'nestjs-i18n'
 import { curry } from 'lodash'
-import { PdfService } from '@/core'
+import { enUS, zhHK } from 'date-fns/locale'
+import { DateFnsService, PdfService } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
 import { I18nTranslate } from '../types'
 
 @Injectable()
 export class InvoiceService {
-  constructor(private pdfService: PdfService, private i18nService: I18nService) {}
+  private readonly dateLocaleMap = {
+    en: {
+      locale: enUS,
+      format: 'MMM dd, yyyy',
+    },
+    hk: {
+      locale: zhHK,
+      format: 'PPP',
+    },
+  }
+  constructor(private pdfService: PdfService, private i18nService: I18nService, private dateService: DateFnsService) {}
 
   async generateService(res: Response, dto: GenerateInvoiceDto): Promise<void> {
     const { name, email } = dto
@@ -46,6 +57,9 @@ export class InvoiceService {
       total,
       title,
     } = await this.getInvoiceTranslatedValues()
+
+    const { locale, format } = this.dateLocaleMap['hk']
+    const issuedDate = this.dateService.formatDate(new Date(Date.now()), format, locale)
     return `
     <div>
         <h1>${title}</h1>
@@ -56,7 +70,7 @@ export class InvoiceService {
             <tr>
             <td style="text-align:left; width: 60%;" height="30">${name}</td>
             <td style="text-align:left; width: 20%; padding: 5px;" height="30">${dateOfIssue}</td>
-            <td style="text-align:left; width: 20%; padding: 5px;" height="30">2022-04-07</td>
+            <td style="text-align:left; width: 20%; padding: 5px;" height="30">${issuedDate}</td>
             </tr>
             <tr>
             <td style="text-align:left" height="30">${email}</td>
