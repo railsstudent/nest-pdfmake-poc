@@ -8,6 +8,8 @@
     "unit_price": "Unit Price",
     "quantity": "Quantity",
     "total": "Total",
-    "total_amount": "Total Amount"
+    "total_amount": "Total Amount",
+    "title": "Invoice",
+    "page_number": "Page {currentPage} of {pageCount}"
   }
 }

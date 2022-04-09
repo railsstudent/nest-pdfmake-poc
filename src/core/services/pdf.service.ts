@@ -13,7 +13,7 @@ export class PdfService {
     const { window } = new jsdom.JSDOM('')
     const content = htmlToPdfmake(htmlString, { tableAutoSize: true, window })
     const defaultStyle: Style = {
-      font: 'Roboto',
+      font: 'Noto',
     }
     const docDefinition: TDocumentDefinitions = { ...optionalDefinition, content, defaultStyle }
     return this.pdfPrinter.createPdfKitDocument(docDefinition)
