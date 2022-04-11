@@ -4,12 +4,9 @@ import { DynamicContent } from 'pdfmake/interfaces'
 import { I18nService } from 'nestjs-i18n'
 import { curry } from 'lodash'
 import { enUS, zhHK } from 'date-fns/locale'
-import clsHook = require('cls-hooked')
-import { DateFnsService, PdfService } from '@/core'
+import { DateFnsService, PdfService, runInLanguage, getCurrentLanguage } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
 import { I18nTranslate } from '../types'
-
-const clsNamespace = clsHook.createNamespace('translation')
 
 @Injectable()
 export class InvoiceService {
@@ -30,9 +27,7 @@ export class InvoiceService {
     const { name, email } = dto
 
     const language = await this.getLanguage()
-    return clsNamespace.runPromise(async () => {
-      clsNamespace.set('language', language)
-
+    return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {
         const strPageCount = this.i18nService.translate('invoice.invoice.page_number', {
           lang: language,
@@ -43,18 +38,18 @@ export class InvoiceService {
 
       const htmlInvoice = await this.getInvoiceHtml(name, email)
       const pdfDoc = this.pdfService.makeDocument(htmlInvoice, { footer })
-      return this.streamDoc(pdfDoc).then((buffer) => {
+      return this.pdfService.streamDoc(pdfDoc).then((buffer) => {
         res.set({
           'Content-Type': 'application/pdf',
           'Content-Disposition': 'attachment; filename="invoice.pdf"',
         })
         new StreamableFile(buffer).getStream().pipe(res)
       })
-    })
+    }) as Promise<void>
   }
 
   private async getInvoiceHtml(name: string, email: string): Promise<string> {
-    const language = clsNamespace.get('language') as string
+    const language = getCurrentLanguage() // CLS_NAMESPACE.get('language') as string
     const {
       billTo,
       dateOfIssue,
@@ -120,7 +115,7 @@ export class InvoiceService {
   private getLanguage(): Promise<string> {
     // pretend to load language from database
     const delay = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
-    return delay(1000).then(() => 'hk')
+    return delay(1000).then(() => 'en')
   }
 
   private async getInvoiceTranslatedValues(language: string) {
@@ -168,30 +163,5 @@ export class InvoiceService {
     const i18Key = `${filename}.${prefix}.${key}`
     const value = await this.i18nService.translate(i18Key, { lang })
     return value as string
-  }
-
-  private streamDoc(pdfDoc: PDFKit.PDFDocument): Promise<Buffer> {
-    // buffer the output
-    const chunks: Uint8Array[] = []
-    return new Promise((resolve: (value: Buffer) => void, reject) => {
-      pdfDoc.on('data', function (chunk: Uint8Array) {
-        chunks.push(chunk)
-      })
-      pdfDoc.on('end', function () {
-        const result = Buffer.concat(chunks)
-        return resolve(result)
-      })
-      pdfDoc.on('error', (err) => reject(err))
-
-      // close the stream
-      if (pdfDoc) {
-        pdfDoc.end()
-      }
-    }).catch((err) => {
-      if (pdfDoc) {
-        pdfDoc.end()
-      }
-      throw err
-    })
   }
 }
