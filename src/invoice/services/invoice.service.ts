@@ -4,13 +4,16 @@ import { DynamicContent } from 'pdfmake/interfaces'
 import { I18nService } from 'nestjs-i18n'
 import { curry } from 'lodash'
 import { enUS, zhHK } from 'date-fns/locale'
+import clsHook = require('cls-hooked')
 import { DateFnsService, PdfService } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
 import { I18nTranslate } from '../types'
 
+const clsNamespace = clsHook.createNamespace('translation')
+
 @Injectable()
 export class InvoiceService {
-  private readonly dateLocaleMap = {
+  private readonly dateLocaleMap: Record<string, { locale: Locale; format: string }> = {
     en: {
       locale: enUS,
       format: 'MMM dd, yyyy',
@@ -20,31 +23,38 @@ export class InvoiceService {
       format: 'PPP',
     },
   }
+
   constructor(private pdfService: PdfService, private i18nService: I18nService, private dateService: DateFnsService) {}
 
   async generateService(res: Response, dto: GenerateInvoiceDto): Promise<void> {
     const { name, email } = dto
-    const htmlInvoice = await this.getInvoiceHtml(name, email)
 
-    const footer: DynamicContent = (currentPage: number, pageCount: number) => {
-      const strPageCount = this.i18nService.translate('invoice.invoice.page_number', {
-        lang: 'hk',
-        args: { currentPage, pageCount },
-      })
-      return { text: strPageCount, alignment: 'right', margin: 10 }
-    }
+    const language = await this.getLanguage()
+    return clsNamespace.runPromise(async () => {
+      clsNamespace.set('language', language)
 
-    const pdfDoc = this.pdfService.makeDocument(htmlInvoice, { footer })
-    return this.streamDoc(pdfDoc).then((buffer) => {
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': 'attachment; filename="invoice.pdf"',
+      const footer: DynamicContent = (currentPage: number, pageCount: number) => {
+        const strPageCount = this.i18nService.translate('invoice.invoice.page_number', {
+          lang: language,
+          args: { currentPage, pageCount },
+        })
+        return { text: strPageCount, alignment: 'right', margin: 10 }
+      }
+
+      const htmlInvoice = await this.getInvoiceHtml(name, email)
+      const pdfDoc = this.pdfService.makeDocument(htmlInvoice, { footer })
+      return this.streamDoc(pdfDoc).then((buffer) => {
+        res.set({
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="invoice.pdf"',
+        })
+        new StreamableFile(buffer).getStream().pipe(res)
       })
-      new StreamableFile(buffer).getStream().pipe(res)
     })
   }
 
   private async getInvoiceHtml(name: string, email: string): Promise<string> {
+    const language = clsNamespace.get('language') as string
     const {
       billTo,
       dateOfIssue,
@@ -56,9 +66,9 @@ export class InvoiceService {
       totalAmount,
       total,
       title,
-    } = await this.getInvoiceTranslatedValues()
+    } = await this.getInvoiceTranslatedValues(language)
 
-    const { locale, format } = this.dateLocaleMap['hk']
+    const { locale, format } = this.dateLocaleMap[language]
     const issuedDate = this.dateService.formatDate(new Date(Date.now()), format, locale)
     return `
     <div>
@@ -107,10 +117,16 @@ export class InvoiceService {
     `
   }
 
-  private async getInvoiceTranslatedValues() {
+  private getLanguage(): Promise<string> {
+    // pretend to load language from database
+    const delay = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
+    return delay(1000).then(() => 'hk')
+  }
+
+  private async getInvoiceTranslatedValues(language: string) {
     const bindTranslate: I18nTranslate = this.translate.bind(this)
     const curried = curry(bindTranslate)
-    const curriedI18nInvoice = curried('hk')('invoice')('invoice')
+    const curriedI18nInvoice = curried(language)('invoice')('invoice')
     const [
       billTo,
       dateOfIssue,
