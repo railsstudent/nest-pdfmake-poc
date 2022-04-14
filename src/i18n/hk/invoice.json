@@ -9,7 +9,7 @@
     "quantity": "數量",
     "total": "金額",
     "total_amount": "總金額",
-    "title": "單據",
+    "title": "發票",
     "page_number": "第 {currentPage} 頁，共 {pageCount} 頁"
   }
 }

@@ -2,11 +2,9 @@ import { Injectable, StreamableFile } from '@nestjs/common'
 import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
 import { I18nService } from 'nestjs-i18n'
-import { curry } from 'lodash'
 import { enUS, zhHK } from 'date-fns/locale'
-import { DateFnsService, PdfService, runInLanguage, getCurrentLanguage } from '@/core'
+import { DateFnsService, PdfService, runInLanguage, getCurrentLanguage, translate } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
-import { I18nTranslate } from '../types'
 
 @Injectable()
 export class InvoiceService {
@@ -49,7 +47,7 @@ export class InvoiceService {
   }
 
   private async getInvoiceHtml(name: string, email: string): Promise<string> {
-    const language = getCurrentLanguage() // CLS_NAMESPACE.get('language') as string
+    const language = getCurrentLanguage()
     const {
       billTo,
       dateOfIssue,
@@ -62,9 +60,9 @@ export class InvoiceService {
       total,
       title,
     } = await this.getInvoiceTranslatedValues(language)
-
     const { locale, format } = this.dateLocaleMap[language]
     const issuedDate = this.dateService.formatDate(new Date(Date.now()), format, locale)
+
     return `
     <div>
         <h1>${title}</h1>
@@ -119,9 +117,7 @@ export class InvoiceService {
   }
 
   private async getInvoiceTranslatedValues(language: string) {
-    const bindTranslate: I18nTranslate = this.translate.bind(this)
-    const curried = curry(bindTranslate)
-    const curriedI18nInvoice = curried(language)('invoice')('invoice')
+    const option = { lang: language }
     const [
       billTo,
       dateOfIssue,
@@ -134,16 +130,16 @@ export class InvoiceService {
       totalAmount,
       title,
     ] = await Promise.all([
-      curriedI18nInvoice('bill_to'),
-      curriedI18nInvoice('date_of_issue'),
-      curriedI18nInvoice('payment_method'),
-      curriedI18nInvoice('credit_card'),
-      curriedI18nInvoice('description'),
-      curriedI18nInvoice('unit_price'),
-      curriedI18nInvoice('quantity'),
-      curriedI18nInvoice('total'),
-      curriedI18nInvoice('total_amount'),
-      curriedI18nInvoice('title'),
+      translate('invoice.invoice.bill_to', option),
+      translate('invoice.invoice.date_of_issue', option),
+      translate('invoice.invoice.payment_method', option),
+      translate('invoice.invoice.credit_card', option),
+      translate('invoice.invoice.description', option),
+      translate('invoice.invoice.unit_price', option),
+      translate('invoice.invoice.quantity', option),
+      translate('invoice.invoice.total', option),
+      translate('invoice.invoice.total_amount', option),
+      translate('invoice.invoice.title', option),
     ])
     return {
       billTo,
@@ -157,11 +153,5 @@ export class InvoiceService {
       totalAmount,
       title,
     }
-  }
-
-  private async translate(lang: string, filename: string, prefix: string, key: string) {
-    const i18Key = `${filename}.${prefix}.${key}`
-    const value = await this.i18nService.translate(i18Key, { lang })
-    return value as string
   }
 }
