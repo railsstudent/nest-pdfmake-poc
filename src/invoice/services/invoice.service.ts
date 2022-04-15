@@ -1,25 +1,16 @@
 import { Injectable, StreamableFile } from '@nestjs/common'
 import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
-import { I18nService } from 'nestjs-i18n'
-import { enUS, zhHK } from 'date-fns/locale'
-import { DateFnsService, PdfService, runInLanguage, getCurrentLanguage, translate } from '@/core'
+import { DateFnsService, getDateLocale, PdfService, runInLanguage, TranslationService } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
 
 @Injectable()
 export class InvoiceService {
-  private readonly dateLocaleMap: Record<string, { locale: Locale; format: string }> = {
-    en: {
-      locale: enUS,
-      format: 'MMM dd, yyyy',
-    },
-    hk: {
-      locale: zhHK,
-      format: 'PPP',
-    },
-  }
-
-  constructor(private pdfService: PdfService, private i18nService: I18nService, private dateService: DateFnsService) {}
+  constructor(
+    private pdfService: PdfService,
+    private translateService: TranslationService,
+    private dateService: DateFnsService,
+  ) {}
 
   async generateService(res: Response, dto: GenerateInvoiceDto): Promise<void> {
     const { name, email } = dto
@@ -27,14 +18,13 @@ export class InvoiceService {
     const language = await this.getLanguage()
     return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {
-        const strPageCount = this.i18nService.translate('invoice.invoice.page_number', {
-          lang: language,
+        const strPageCount = this.translateService.translate('invoice.invoice.page_number', {
           args: { currentPage, pageCount },
         })
         return { text: strPageCount, alignment: 'right', margin: 10 }
       }
 
-      const htmlInvoice = await this.getInvoiceHtml(name, email)
+      const htmlInvoice = this.getInvoiceHtml(name, email)
       const pdfDoc = this.pdfService.makeDocument(htmlInvoice, { footer })
       return this.pdfService.streamDoc(pdfDoc).then((buffer) => {
         res.set({
@@ -46,8 +36,7 @@ export class InvoiceService {
     }) as Promise<void>
   }
 
-  private async getInvoiceHtml(name: string, email: string): Promise<string> {
-    const language = getCurrentLanguage()
+  private getInvoiceHtml(name: string, email: string): string {
     const {
       billTo,
       dateOfIssue,
@@ -59,8 +48,8 @@ export class InvoiceService {
       totalAmount,
       total,
       title,
-    } = await this.getInvoiceTranslatedValues(language)
-    const { locale, format } = this.dateLocaleMap[language]
+    } = this.getInvoiceTranslatedValues()
+    const { locale, format } = getDateLocale()
     const issuedDate = this.dateService.formatDate(new Date(Date.now()), format, locale)
 
     return `
@@ -84,10 +73,10 @@ export class InvoiceService {
         <hr />
         <table>
             <tr>
-            <td style="width:55%; text-align: left; font-size: 20px; font-style: italic; color: #7a7a7a">${description}</td>
-            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; color: #7a7a7a">${unitPrice}</td>
-            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; color: #7a7a7a">${quantity}</td>
-            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; color: #7a7a7a">${total}</td>
+            <td style="width:55%; text-align: left; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${description}</td>
+            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${unitPrice}</td>
+            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${quantity}</td>
+            <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${total}</td>
             </tr>
             <tr>
             <td style="text-align:left" height="30">English Textbook</td>
@@ -113,11 +102,10 @@ export class InvoiceService {
   private getLanguage(): Promise<string> {
     // pretend to load language from database
     const delay = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
-    return delay(1000).then(() => 'en')
+    return delay(1000).then(() => 'hk')
   }
 
-  private async getInvoiceTranslatedValues(language: string) {
-    const option = { lang: language }
+  private getInvoiceTranslatedValues() {
     const [
       billTo,
       dateOfIssue,
@@ -129,18 +117,19 @@ export class InvoiceService {
       total,
       totalAmount,
       title,
-    ] = await Promise.all([
-      translate('invoice.invoice.bill_to', option),
-      translate('invoice.invoice.date_of_issue', option),
-      translate('invoice.invoice.payment_method', option),
-      translate('invoice.invoice.credit_card', option),
-      translate('invoice.invoice.description', option),
-      translate('invoice.invoice.unit_price', option),
-      translate('invoice.invoice.quantity', option),
-      translate('invoice.invoice.total', option),
-      translate('invoice.invoice.total_amount', option),
-      translate('invoice.invoice.title', option),
+    ] = this.translateService.translates([
+      'invoice.invoice.bill_to',
+      'invoice.invoice.date_of_issue',
+      'invoice.invoice.payment_method',
+      'invoice.invoice.credit_card',
+      'invoice.invoice.description',
+      'invoice.invoice.unit_price',
+      'invoice.invoice.quantity',
+      'invoice.invoice.total',
+      'invoice.invoice.total_amount',
+      'invoice.invoice.title',
     ])
+
     return {
       billTo,
       dateOfIssue,

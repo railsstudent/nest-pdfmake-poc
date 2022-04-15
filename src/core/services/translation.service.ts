@@ -6,15 +6,9 @@ import { CLS_NAMESPACE } from '../helpers'
 @Injectable()
 export class TranslationService {
   private readonly i18nOptions: I18nOptions
-  private static instance: TranslationService
 
   constructor(private i18nService: I18nService, private moduleRef: ModuleRef) {
-    TranslationService.instance = this
     this.i18nOptions = this.moduleRef.get(I18N_OPTIONS, { strict: false })
-  }
-
-  static getInstance(): TranslationService {
-    return this.instance
   }
 
   getCurrentLanguage(): string {
@@ -25,10 +19,18 @@ export class TranslationService {
     return `${language}`
   }
 
-  async translate(i18Key: string, options: TranslateOptions = {}): Promise<string> {
+  translate(i18nKey: string, options: TranslateOptions = {}): string {
     if (!options.lang) {
       options.lang = this.getCurrentLanguage()
     }
-    return this.i18nService.translate(i18Key, options)
+    return this.i18nService.translate<string>(i18nKey, options)
+  }
+
+  translates(i18nKeys: string[], options: TranslateOptions = {}): string[] {
+    if (!options.lang) {
+      options.lang = this.getCurrentLanguage()
+    }
+
+    return i18nKeys.map((key) => this.translate(key, options))
   }
 }

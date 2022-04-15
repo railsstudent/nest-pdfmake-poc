@@ -4,7 +4,7 @@ import htmlToPdfmake = require('html-to-pdfmake')
 import jsdom = require('jsdom')
 import { TDocumentDefinitions } from 'pdfmake/interfaces'
 import { PDF_MAKER_SYMBOL } from '../constants'
-import { getCurrentLanguage } from '../helpers'
+import { TranslationService } from './translation.service'
 
 @Injectable()
 export class PdfService {
@@ -12,12 +12,15 @@ export class PdfService {
     en: 'Roboto',
     hk: 'Noto',
   }
-  constructor(@Inject(PDF_MAKER_SYMBOL) private pdfPrinter: PdfPrinter) {}
+  constructor(
+    @Inject(PDF_MAKER_SYMBOL) private pdfPrinter: PdfPrinter,
+    private translationService: TranslationService,
+  ) {}
 
   makeDocument(htmlString: string, optionalDefinition: Omit<TDocumentDefinitions, 'content'> = {}): PDFKit.PDFDocument {
     const { window } = new jsdom.JSDOM('')
     const content = htmlToPdfmake(htmlString, { tableAutoSize: true, window })
-    const language = getCurrentLanguage()
+    const language = this.translationService.getCurrentLanguage()
     const font = this.fontMap[language] || 'Roboto'
     const docDefinition: TDocumentDefinitions = { ...optionalDefinition, content, defaultStyle: { font } }
     return this.pdfPrinter.createPdfKitDocument(docDefinition)

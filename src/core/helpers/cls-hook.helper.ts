@@ -1,19 +1,11 @@
-import { TranslateOptions } from 'nestjs-i18n'
-import { TranslationService } from '../services'
+import clsHook = require('cls-hooked')
 
-import { CLS_NAMESPACE } from './cls-namespace.constant'
+const CLS_NAMESPACE_NAME = 'translation'
+export const CLS_NAMESPACE = clsHook.createNamespace(CLS_NAMESPACE_NAME)
 
 export function runInLanguage(language: string, callback: (...args: unknown[]) => Promise<unknown>) {
   return CLS_NAMESPACE.runAndReturn(() => {
     CLS_NAMESPACE.set('language', language)
     return callback()
   })
-}
-
-export function getCurrentLanguage(): string {
-  return TranslationService.getInstance().getCurrentLanguage()
-}
-
-export function translate(i18nKey: string, options?: TranslateOptions) {
-  return TranslationService.getInstance().translate(i18nKey, options)
 }

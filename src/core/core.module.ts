@@ -4,6 +4,6 @@ import { PdfService, DateFnsService, TranslationService } from './services'
 
 @Module({
   providers: [PdfService, PDF_MAKER, DateFnsService, TranslationService],
-  exports: [PdfService, DateFnsService],
+  exports: [PdfService, DateFnsService, TranslationService],
 })
 export class CoreModule {}
