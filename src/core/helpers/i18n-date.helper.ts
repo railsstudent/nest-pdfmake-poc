@@ -12,6 +12,11 @@ export function getDateLocale(): { locale: Locale; format: string } {
       format: 'PPP',
     },
   }
-  const language = CLS_NAMESPACE.get('language') as string
-  return dateLocaleMap[language] || dateLocaleMap['en']
+
+  const language = CLS_NAMESPACE.get('language')
+  const fallbackLocale = dateLocaleMap['en']
+  if (language && typeof language === 'string') {
+    return dateLocaleMap[language] || fallbackLocale
+  }
+  return fallbackLocale
 }
