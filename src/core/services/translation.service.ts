@@ -2,6 +2,7 @@ import { I18nOptions, I18nService, I18N_OPTIONS, TranslateOptions } from 'nestjs
 import { Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { CLS_NAMESPACE } from '../helpers'
+import { LANGUAGE_KEY } from '../constants'
 
 @Injectable()
 export class TranslationService {
@@ -12,7 +13,7 @@ export class TranslationService {
   }
 
   getCurrentLanguage(): string {
-    const language = CLS_NAMESPACE.get('language')
+    const language = CLS_NAMESPACE.get(LANGUAGE_KEY)
     if (!language) {
       return this.i18nOptions.fallbackLanguage
     }
