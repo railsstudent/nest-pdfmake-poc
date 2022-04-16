@@ -1,16 +1,13 @@
 import { Injectable, StreamableFile } from '@nestjs/common'
 import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
-import { DateFnsService, getDateLocale, PdfService, runInLanguage, TranslationService } from '@/core'
+import { DateFnsService, getDateLocale, PdfService, runInLanguage, translate, translates } from '@/core'
 import { GenerateInvoiceDto } from '../dtos'
+import { OrderItem } from '../interfaces'
 
 @Injectable()
 export class InvoiceService {
-  constructor(
-    private pdfService: PdfService,
-    private translateService: TranslationService,
-    private dateService: DateFnsService,
-  ) {}
+  constructor(private pdfService: PdfService, private dateService: DateFnsService) {}
 
   async generateService(res: Response, dto: GenerateInvoiceDto): Promise<void> {
     const { name, email } = dto
@@ -18,7 +15,7 @@ export class InvoiceService {
     const language = await this.getLanguage()
     return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {
-        const strPageCount = this.translateService.translate('invoice.invoice.page_number', {
+        const strPageCount = translate('invoice.invoice.page_number', {
           args: { currentPage, pageCount },
         })
         return { text: strPageCount, alignment: 'right', margin: 10 }
@@ -45,12 +42,37 @@ export class InvoiceService {
       description,
       unitPrice,
       quantity,
-      totalAmount,
+      totalAmount: strTotalAmount,
       total,
       title,
     } = this.getInvoiceTranslatedValues()
     const { locale, format } = getDateLocale()
     const issuedDate = this.dateService.formatDate(new Date(Date.now()), format, locale)
+
+    const items: OrderItem[] = [
+      {
+        description: 'English Textbook',
+        price: 40,
+        quantity: 2,
+      },
+      {
+        description: 'A pair of black socks',
+        price: 20,
+        quantity: 5,
+      },
+      {
+        description: 'Japanese Textbook',
+        price: 22.5,
+        quantity: 1,
+      },
+      {
+        description: 'Japanese Workbook',
+        price: 12.5,
+        quantity: 1,
+      },
+    ]
+
+    const totalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0)
 
     return `
     <div>
@@ -78,25 +100,29 @@ export class InvoiceService {
             <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${quantity}</td>
             <td style="width:15%; text-align: right; font-size: 20px; font-style: italic; font-weight: bold; color: #7a7a7a">${total}</td>
             </tr>
+            ${this.getOrderItemsHtml(items)}
             <tr>
-            <td style="text-align:left" height="30">English Textbook</td>
-            <td style="text-align:right; padding: 5px;" height="30">40</td>
-            <td style="text-align:right; padding: 5px;" height="30">2</td>
-            <td style="text-align:right; padding: 5px;" height="30">80</td>
-            </tr>
-            <tr>
-            <td style="text-align:left" height="30">A pair of black socks</td>
-            <td style="text-align:right; padding: 5px;" height="30">20</td>
-            <td style="text-align:right; padding: 5px;" height="30">5</td>
-            <td style="text-align:right; padding: 5px;" height="30">100</td>
-            </tr>
-            <tr>
-            <td style="text-align:right" height="30" colspan="3">${totalAmount}</td>
-            <td style="text-align:right; padding: 5px;" height="30">180</td>
+            <td style="text-align:right" height="30" colspan="3">${strTotalAmount}</td>
+            <td style="text-align:right; padding: 5px;" height="30">${totalAmount}</td>
             </tr>
         </table>
     </div>
     `
+  }
+
+  private getOrderItemsHtml(items: OrderItem[]): string {
+    return items.reduce((acc, item) => {
+      const { description, quantity, price } = item
+      const row = `
+        <tr>
+        <td style="text-align:left" height="30">${description}</td>
+        <td style="text-align:right; padding: 5px;" height="30">${price}</td>
+        <td style="text-align:right; padding: 5px;" height="30">${quantity}</td>
+        <td style="text-align:right; padding: 5px;" height="30">${price * quantity}</td>
+        </tr>
+      `
+      return `${acc}${row}`
+    }, '')
   }
 
   private getLanguage(): Promise<string> {
@@ -117,7 +143,7 @@ export class InvoiceService {
       total,
       totalAmount,
       title,
-    ] = this.translateService.translates([
+    ] = translates([
       'invoice.invoice.bill_to',
       'invoice.invoice.date_of_issue',
       'invoice.invoice.payment_method',

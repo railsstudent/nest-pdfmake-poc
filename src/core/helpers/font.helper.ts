@@ -1,4 +1,4 @@
-import { CLS_NAMESPACE } from './cls-hook.helper'
+import { currentLanguage } from './translation.helper'
 
 export function getFont(): string {
   const fontMap: Record<string, string> = {
@@ -6,10 +6,6 @@ export function getFont(): string {
     hk: 'Noto',
   }
 
-  const language = CLS_NAMESPACE.get('language')
-  const fallbackFont = fontMap['en']
-  if (language && typeof language === 'string') {
-    return fontMap[language] || fallbackFont
-  }
-  return fallbackFont
+  const language = currentLanguage()
+  return fontMap[language]
 }

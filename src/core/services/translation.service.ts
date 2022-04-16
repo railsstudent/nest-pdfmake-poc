@@ -7,8 +7,10 @@ import { LANGUAGE_KEY } from '../constants'
 @Injectable()
 export class TranslationService {
   private readonly i18nOptions: I18nOptions
+  static instance: TranslationService
 
   constructor(private i18nService: I18nService, private moduleRef: ModuleRef) {
+    TranslationService.instance = this
     this.i18nOptions = this.moduleRef.get(I18N_OPTIONS, { strict: false })
   }
 
