@@ -13,7 +13,7 @@ import { DbSchema, OrderItem, User } from '../interfaces'
 export class InvoiceService {
   constructor(private pdfService: PdfService, private dateService: DateFnsService) {}
 
-  async generateService(res: Response, id: number): Promise<void> {
+  async generate(res: Response, id: number): Promise<void> {
     const { email, name, language } = await this.getUser(id)
     return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {

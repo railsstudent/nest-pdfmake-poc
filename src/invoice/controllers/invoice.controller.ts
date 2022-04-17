@@ -8,6 +8,6 @@ export class InvoiceController {
 
   @Post(':userId')
   generateInvoice(@Res() res: Response, @Param('userId', ParseIntPipe) userId: number): Promise<void> {
-    return this.invoiceService.generateService(res, userId)
+    return this.invoiceService.generate(res, userId)
   }
 }
