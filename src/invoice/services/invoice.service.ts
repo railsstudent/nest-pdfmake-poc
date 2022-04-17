@@ -1,18 +1,20 @@
 import { Injectable, StreamableFile } from '@nestjs/common'
 import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
+
+import * as low from 'lowdb'
+import * as FileSync from 'lowdb/adapters/FileSync'
+import * as path from 'path'
 import { DateFnsService, getDateLocale, PdfService, runInLanguage, translate, translates } from '@/core'
-import { GenerateInvoiceDto } from '../dtos'
-import { OrderItem } from '../interfaces'
+import { env } from '@/config'
+import { DbSchema, OrderItem, User } from '../interfaces'
 
 @Injectable()
 export class InvoiceService {
   constructor(private pdfService: PdfService, private dateService: DateFnsService) {}
 
-  async generateService(res: Response, dto: GenerateInvoiceDto): Promise<void> {
-    const { name, email } = dto
-
-    const language = await this.getLanguage()
+  async generateService(res: Response, id: number): Promise<void> {
+    const { email, name, language } = await this.getUser(id)
     return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {
         const strPageCount = translate('invoice.invoice.page_number', {
@@ -125,10 +127,16 @@ export class InvoiceService {
     }, '')
   }
 
-  private getLanguage(): Promise<string> {
-    // pretend to load language from database
+  private async getUser(userId: number): Promise<Omit<User, 'id'>> {
+    // load language from JSON database
     const delay = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
-    return delay(1000).then(() => 'hk')
+    return delay(1000).then(() => {
+      const adapter = new FileSync<DbSchema>(path.join(env.ROOT_PATH, 'db.json'))
+      const db = low(adapter)
+      const user: User = db.get('users').find({ id: userId }).value()
+      const { id, ...rest } = user
+      return rest
+    })
   }
 
   private getInvoiceTranslatedValues() {

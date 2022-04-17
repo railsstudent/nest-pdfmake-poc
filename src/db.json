@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe Customer",
+      "email": "john.doe@email.com",
+      "language": "en"
+    },
+    {
+      "id": 2,
+      "name": "Jane Doe Customer",
+      "email": "jane.doe@email.com",
+      "language": "hk"
+    }
+  ]
+}

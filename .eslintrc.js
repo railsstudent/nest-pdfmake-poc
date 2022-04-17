@@ -82,6 +82,7 @@ module.exports = {
         format: ['camelCase'],
       },
     ],
+    '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
   },
   settings: {
     'import/parsers': {
