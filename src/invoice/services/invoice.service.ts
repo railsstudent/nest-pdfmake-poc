@@ -1,4 +1,4 @@
-import { Injectable, StreamableFile } from '@nestjs/common'
+import { BadRequestException, Injectable, StreamableFile } from '@nestjs/common'
 import { Response } from 'express'
 import { DynamicContent } from 'pdfmake/interfaces'
 
@@ -14,7 +14,7 @@ export class InvoiceService {
   constructor(private pdfService: PdfService, private dateService: DateFnsService) {}
 
   async generate(res: Response, id: number): Promise<void> {
-    const { email, name, language } = await this.getUser(id)
+    const { email, name, language } = this.getUser(id)
     return runInLanguage(language, async () => {
       const footer: DynamicContent = (currentPage: number, pageCount: number) => {
         const strPageCount = translate('invoice.invoice.page_number', {
@@ -127,18 +127,6 @@ export class InvoiceService {
     }, '')
   }
 
-  private async getUser(userId: number): Promise<Omit<User, 'id'>> {
-    // load language from JSON database
-    const delay = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
-    return delay(1000).then(() => {
-      const adapter = new FileSync<DbSchema>(path.join(env.ROOT_PATH, 'db.json'))
-      const db = low(adapter)
-      const user: User = db.get('users').find({ id: userId }).value()
-      const { id, ...rest } = user
-      return rest
-    })
-  }
-
   private getInvoiceTranslatedValues() {
     const [
       billTo,
@@ -176,5 +164,18 @@ export class InvoiceService {
       totalAmount,
       title,
     }
+  }
+
+  private getUser(userId: number): Omit<User, 'id'> {
+    // load language from JSON database
+    const adapter = new FileSync<DbSchema>(path.join(env.ROOT_PATH, 'db.json'))
+    const db = low(adapter)
+    const user: User = db.get('users').find({ id: userId }).value()
+    if (!user) {
+      throw new BadRequestException()
+    }
+
+    const { id, ...rest } = user
+    return rest
   }
 }
