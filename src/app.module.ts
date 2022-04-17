@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common'
+import { APP_FILTER } from '@nestjs/core'
 import { I18nModule } from 'nestjs-i18n'
 import * as path from 'path'
+import { AllExceptionsFilter } from './all-exceptions.filter'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { CoreModule } from './core'
@@ -19,6 +21,12 @@ import { InvoiceModule } from './invoice'
     InvoiceModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

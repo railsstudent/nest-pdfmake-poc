@@ -172,7 +172,9 @@ export class InvoiceService {
     const db = low(adapter)
     const user: User = db.get('users').find({ id: userId }).value()
     if (!user) {
-      throw new BadRequestException()
+      throw new BadRequestException({
+        key: 'error.users.not_found',
+      })
     }
 
     const { id, ...rest } = user
